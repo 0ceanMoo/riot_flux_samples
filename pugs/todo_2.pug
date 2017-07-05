@@ -1,0 +1,175 @@
+extends ../_includes/_layout
+block contents
+  main
+    todo
+    script(type="riot/tag")
+      todo
+        h1 TODO
+        form(onsubmit="{addTask}")
+          input(value="{stores.input.text}" onkeyup="{inputting}" placeholder="新規タスクを入力")
+          select(onchange="{changePriority}")
+            option(value="low"  selected="{stores.input.priority==='low' }") 優先度：低
+            option(value="mid"  selected="{stores.input.priority==='mid' }") 優先度：中
+            option(value="high" selected="{stores.input.priority==='high'}") 優先度：高
+
+          button(disabled="{stores.input.text===''}") 追加
+        ul
+          li(each="{task, i in stores.todo.tasks}" class="{is_done: task.done}" onclick="{toggleTask.bind(this, i)}")
+            input(type="checkbox" checked="{task.done}")/
+            span.icon.is_high( if="{task.priority==='high'}") 高
+            span.icon.is_mid(  if="{task.priority==='mid'}" ) 中
+            span.icon.is_low(  if="{task.priority==='low'}" ) 低
+            | {task.title}
+        div
+          button(disabled="{!stores.todo.hasCompletedTasks}" onclick="{clearCompletedTasks}") 完了したタスクを削除
+        style(type="sass").
+          .is_done {
+            text-decoration: line-through;
+            color: #ccc;
+            .icon {
+              &.is_high, &.is_mid, &.is_low {
+                background: #ccc;
+              }
+            }
+          }
+          .icon {
+            color:white;
+            display: inline-block;
+            margin: 0 5px;
+            padding: 0 3px;
+            &.is_high{ background: #F66; }
+            &.is_mid { background: #CC6; }
+            &.is_low { background: #66F; }
+          }
+        .
+          const ACTION    = opts.action;
+          const dispatcher= opts.dispatcher;
+          this.stores     = dispatcher.stores
+
+          this.on("mount", function(){
+            dispatcher.trigger(ACTION.TODO_ADD,
+              {title:"aaa", priority:"mid", done:true},
+              {title:"bbb", priority:"low", done:false},
+            );
+          })
+
+          // input
+          this.stores.input.on( "changed", () => { this.update() });
+
+          addTask(e) {
+            e.preventDefault()
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_ADD, {title:this.stores.input.text, priority:this.stores.input.priority, done:false});
+          }
+          inputting(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.INPUT_WRITING, e.target.value)
+          }
+          changePriority(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.INPUT_CHANGE, e.target.value)
+          }
+
+          // todo
+          this.stores.todo.on( "changed", () => { this.update() });
+
+          toggleTask(i, e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_TOGGLE, i)
+          }
+
+          clearCompletedTasks(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_CLEAR)
+          }
+
+block append js
+  script.
+    class InputStore extends Store {
+      DEFAULT_TEXT() { return "" }
+      DEFAULT_PRIO() { return "mid" }
+
+      get text() { return this._text }
+      set text(text) { this._text = text; this.changed() }
+      get priority() { return this._priority }
+      set priority(priority) { this._priority = priority; this.changed() }
+
+      constructor() {
+        super();
+        this._text      = this.DEFAULT_TEXT();
+        this._priority  = this.DEFAULT_PRIO();
+      }
+      init() {
+        this._text      = this.DEFAULT_TEXT();
+        this._priority  = this.DEFAULT_PRIO();
+        this.changed();
+      }
+    }
+
+    class TodoStore extends Store {
+      get tasks() { return this._tasks; }
+      get hasCompletedTasks() {
+        let completed = this.tasks.some(function(task, i){
+          return task.done
+        });
+        return completed;
+      }
+      constructor() {
+        super();
+        this._tasks = [];
+      }
+
+      addTask(...tasks) { //console.log(tasks)
+        for ( const task of tasks  ) {
+          this._tasks.push(task);
+        }
+        this.changed();
+      }
+      toggle(i) {
+        let task = this._tasks[i];
+        if ( task ) {
+          task.done = !task.done;
+          this.changed();
+        }
+      }
+      clearAllTasks() {
+        this._tasks = [];
+        this.changed();
+      }
+      clearCompletedTasks() {
+        let tasks = this.tasks.filter(function(task, i){
+          return !task.done
+        });
+        this._tasks = tasks;
+        this.changed();
+      }
+    }
+
+    const ACTION = {
+      TODO_ADD      : "TODO_ADD",
+      TODO_TOGGLE   : "TODO_TOGGLE",
+      TODO_CLEAR    : "TODO_CLEAR",
+      INPUT_WRITING : "INPUT_WRITING",
+      INPUT_CHANGE  : "INPUT_CHANGE",
+    };
+
+    dispatcher.addStore("todo",   new TodoStore());
+    dispatcher.addStore("input",  new InputStore());
+    dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)
+      stores.todo.addTask(...tasks);
+      stores.input.init()
+    });
+    dispatcher.on(ACTION.TODO_TOGGLE, function(stores, i){
+      stores.todo.toggle(i);
+    });
+    dispatcher.on(ACTION.TODO_CLEAR, function(stores){
+      stores.todo.clearCompletedTasks();
+    });
+    dispatcher.on(ACTION.INPUT_WRITING, function(stores, text){
+      stores.input.text = text;
+    });
+    dispatcher.on(ACTION.INPUT_CHANGE, function(stores, priority){
+      stores.input.priority = priority
+    });
+
+    riot.mount("todo", {dispatcher:dispatcher, action:ACTION});

@@ -1,0 +1,63 @@
+extends ../_includes/_layout
+block contents
+  main
+    timer
+    script(type="riot/tag")
+      timer
+        h1 Timer
+        div カウント数：
+          span {stores.counter.num}
+        div
+          button(onclick="{inc}") +1
+          button(onclick="{dec}") -1
+          button(onclick="{reset}") リセット
+        style.
+          button {
+            background: #ccc;
+          }
+        .
+          const ACTION    = opts.action;
+          const dispatcher= opts.dispatcher;
+          this.stores     = dispatcher.stores
+
+          this.stores.counter.on( "changed", () => { this.update() });
+
+          inc(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_INC)
+          }
+          dec(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_DEC)
+          }
+          reset(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_RESET)
+          }
+
+block append js
+  script.
+    class CounterStore extends Store {
+      get num() { return this._num }
+      constructor(num=0) {
+        super();
+        this._num = num;
+      }
+      inc()   { this._num++; this.changed() }
+      dec()   { this._num--; this.changed() }
+      reset() { this._num=0; this.changed() }
+    }
+
+    const ACTION = {
+      COUNTER_INC   : "COUNTER_INC",
+      COUNTER_DEC   : "COUNTER_DEC",
+      COUNTER_RESET : "COUNTER_RESET",
+    };
+
+    let counter = new CounterStore(99);
+    dispatcher.addStore("counter", counter);
+    dispatcher.on(ACTION.COUNTER_INC,  function(stores){stores.counter.inc()});
+    dispatcher.on(ACTION.COUNTER_DEC,  function(stores){stores.counter.dec()});
+    dispatcher.on(ACTION.COUNTER_RESET,function(stores){stores.counter.reset()});
+
+    riot.mount("timer", {dispatcher:dispatcher, action:ACTION});

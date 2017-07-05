@@ -1,0 +1,33 @@
+extends ../_includes/_layout
+block contents
+  main
+    todo
+    script(type="riot/tag")
+      todo
+        h1 TODO
+        form(onsubmit="{addTask}")
+          input(ref="task" placeholder="新規タスクを入力")
+          button 追加
+        ul
+          li(each="{task in tasks}" class="{is_done: task.done}" onclick="{toggle.bind(this, task)}") {task.title}
+        style.
+          .is_done {
+            text-decoration: line-through;
+            color: #ccc;
+        .
+          this.tasks = [
+            {title:"aaa", done:true},
+            {title:"bbb", done:false},
+          ];
+          addTask(e) {
+            e.preventDefault()
+            this.tasks.push({title:this.refs.task.value, done:false})
+            this.refs.task.value = ""
+          }
+          toggle(task, e) {
+            task.done = !task.done
+          }
+
+block append js
+  script.
+    riot.mount("todo")

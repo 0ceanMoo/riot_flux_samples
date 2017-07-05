@@ -1,0 +1,58 @@
+doctype html
+html(lang="ja")
+  head
+    block meta
+      meta(charset="utf-8")
+      meta(name="viewport" content="width=device-width, initial-scale=1")
+    link(rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.2/css/bulma.min.css")
+    link(rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css")
+    block css
+      style.
+        main {
+          padding: 2em;
+        }
+    block title
+      title 管理画面 <%= title %>
+  body
+    block contents
+      section
+    block js
+      //block append js or prepande js
+      script(src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js")
+      script(src='https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js')
+      script.
+        riot.parsers.css.sass = function(tagName, css) {
+          var result = Sass.compile(css);
+          return result;
+        };
+        class Dispatcher {
+          get stores() { return this._stores; }
+          addStore(key, store) { this._stores[key] = store }
+          constructor(...stores) {
+            this._stores  = {}
+            this._actions = {}
+          }
+
+          trigger(action, ...data) {
+            let callback = this._actions[action]
+            if ( typeof callback === "function" )
+              callback(this.stores, ...data)
+            //else
+            //  console.warn("コールバック関数が登録されていません。")
+          }
+          on(action, callback) {
+            this._actions[action] = callback
+          }
+        }
+        const dispatcher = new Dispatcher();
+
+        class Store {
+          constructor() {
+            riot.observable(this)
+          }
+          changed(...args) {  //console.log(args)
+            //console.log(new Error().stack)
+            this.trigger("changed", ...args);
+          }
+        }
+
