@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "gulp": "gulp",
-    "build":"npm run -- gulp pug",
-    "watcch":"npm run -- gulp watch",
+    "build": "npm run -- gulp pug",
+    "watch": "npm run -- gulp watch",
+    "start": "npm run -- gulp webserver",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +22,7 @@
   "homepage": "https://github.com/0ceanMoo/riot_flux_samples#readme",
   "devDependencies": {
     "gulp": "^3.9.1",
-    "gulp-pug": "^3.3.0"
+    "gulp-pug": "^3.3.0",
+    "gulp-webserver": "^0.9.1"
   }
 }
