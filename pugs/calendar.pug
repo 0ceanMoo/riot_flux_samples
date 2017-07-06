@@ -39,6 +39,8 @@ block riot
           }
 
 block append js
+  script(src='/js/riot-sass.js')
+  script(src='/js/riot-flux.js')
   script.
     class CalendarStore extends Store {
       get year()   { return this._year }
@@ -96,3 +98,10 @@ block append js
     dispatcher.on(ACTION.CALENDAR_TODAY,      function(stores){stores.calendar.reset()});
 
     riot.mount("calendar", {dispatcher:dispatcher, action:ACTION});
+block memo
+  section
+    h2 解説
+    p カレンダークラスを設計し、Storeを継承し、ディスパッチャに登録
+    p riotにディスパッチャを渡し、ビューはStoreをsubscribe
+    p riotでUI作って、ディスパッチャを叩く
+    p 段組みのカレンダー表示するのは、今回の目的とは違うのでやんない。

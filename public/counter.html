@@ -43,6 +43,8 @@
     </main>
     <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
     <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="/js/riot-sass.js"></script>
+    <script src="/js/riot-flux.js"></script>
     <script>
       class CounterStore extends Store {
         get num() { return this._num }
@@ -68,6 +70,38 @@
       dispatcher.on(ACTION.COUNTER_RESET,function(stores){stores.counter.reset()});
       
       riot.mount("counter", {dispatcher:dispatcher, action:ACTION});
+      
     </script>
+    <section>
+      <h2>解説</h2>
+      <p>fluxとかの解説はもうしない。アプリの設計方法というのを考えてみる</p>
+      <ul>
+        <li>カウンターを実装するにあたって、必要なもの（オブジェクト）を考えてみる
+          <ul>
+            <li>数字を保持するプロパティ</li>
+            <li>加算、減算、リセットのメソッド</li>
+          </ul>
+        </li>
+        <li>っで、これをStoreの子クラスとして作る</li>
+        <li>加算、減算、リセット をActionとして定義する</li>
+        <li>ディスパッチャに
+          <ul>
+            <li>Storeを登録する</li>
+            <li>Action時のStoreへの処理を登録する</li>
+          </ul>
+        </li>
+        <li>ビュー(riot)で
+          <ul>
+            <li>ボタンなりを配置して、任意のActionでdispatcherを叩けるUIを設置する</li>
+          </ul>
+        </li>
+      </ul>
+      <h2>あとがき</h2>
+      <ul>
+        <li>ディスパッチャをたたけば、viewが勝手に更新されるという仕組みは非常に楽だ。</li>
+        <li>Actionをどうするか？どんなStoreクラスを作るか？は経験がものをいうと思うし、ここがキモだと感じてる。</li>
+        <li>サーバと通信するアプリの場合にも、通用するのかってのは１つの懸念ではある</li>
+      </ul>
+    </section>
   </body>
 </html>

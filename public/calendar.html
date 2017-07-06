@@ -46,6 +46,8 @@
     </main>
     <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
     <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="/js/riot-sass.js"></script>
+    <script src="/js/riot-flux.js"></script>
     <script>
       class CalendarStore extends Store {
         get year()   { return this._year }
@@ -104,5 +106,12 @@
       
       riot.mount("calendar", {dispatcher:dispatcher, action:ACTION});
     </script>
+    <section>
+      <h2>解説</h2>
+      <p>カレンダークラスを設計し、Storeを継承し、ディスパッチャに登録</p>
+      <p>riotにディスパッチャを渡し、ビューはStoreをsubscribe</p>
+      <p>riotでUI作って、ディスパッチャを叩く</p>
+      <p>段組みのカレンダー表示するのは、今回の目的とは違うのでやんない。</p>
+    </section>
   </body>
 </html>

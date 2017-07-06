@@ -36,6 +36,8 @@ block riot
           }
 
 block append js
+  script(src='/js/riot-sass.js')
+  script(src='/js/riot-flux.js')
   script.
     class CounterStore extends Store {
       get num() { return this._num }
@@ -61,3 +63,29 @@ block append js
     dispatcher.on(ACTION.COUNTER_RESET,function(stores){stores.counter.reset()});
 
     riot.mount("counter", {dispatcher:dispatcher, action:ACTION});
+
+block memo
+  section
+    h2 解説
+    p fluxとかの解説はもうしない。アプリの設計方法というのを考えてみる
+    ul
+      li カウンターを実装するにあたって、必要なもの（オブジェクト）を考えてみる
+        ul
+          li 数字を保持するプロパティ
+          li 加算、減算、リセットのメソッド
+      li っで、これをStoreの子クラスとして作る
+
+      li 加算、減算、リセット をActionとして定義する
+      li ディスパッチャに
+        ul
+          li Storeを登録する
+          li Action時のStoreへの処理を登録する
+      li ビュー(riot)で
+        ul
+          li ボタンなりを配置して、任意のActionでdispatcherを叩けるUIを設置する
+
+    h2 あとがき
+    ul
+      li ディスパッチャをたたけば、viewが勝手に更新されるという仕組みは非常に楽だ。
+      li Actionをどうするか？どんなStoreクラスを作るか？は経験がものをいうと思うし、ここがキモだと感じてる。
+      li サーバと通信するアプリの場合にも、通用するのかってのは１つの懸念ではある
