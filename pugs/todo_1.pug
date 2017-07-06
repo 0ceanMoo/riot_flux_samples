@@ -42,6 +42,7 @@ block contents
             &.is_low { background: #66F; }
           }
         .
+          // 宣言や初期化
           this.input  = opts.input;
           this.todo   = opts.todo;
 
@@ -57,19 +58,7 @@ block contents
             );
           })
 
-          this.input.on("changed", (text, priority) => {
-            this.update({
-              task    : text,
-              priority: priority,
-            });
-          });
-          this.todo.on("changed", (tasks, hasCompletedTasks) => {
-            this.tasks  = tasks
-            this.hasCompletedTasks = hasCompletedTasks
-            this.input.init()
-            this.update()
-          });
-
+          // 関数（オブジェクト操作）
           inputting(e) {
             this.input.text = e.target.value
           }
@@ -86,8 +75,23 @@ block contents
           clearCompletedTasks(e) {
             this.todo.clearCompletedTasks();
           }
+
+          // 監視＆ビュー操作
+          this.input.on("changed", (text, priority) => {
+            this.update({
+              task    : text,
+              priority: priority,
+            });
+          });
+          this.todo.on("changed", (tasks, hasCompletedTasks) => {
+            this.tasks  = tasks
+            this.hasCompletedTasks = hasCompletedTasks
+            this.input.init()
+            this.update()
+          });
+
     h2 解説
-    p まず<a href="./todo_0.html">普通の使い方</a>を読んでることを前提とする。
+    p まず<a href="./todo_0.html">TODO - 普通の使い方</a>を読んでることを前提とする。
     ul
       li 前準備
         ul
@@ -160,7 +164,7 @@ block contents
           li オブジェクトは、自らの値に変更があったら、changedで変更があったことを必ず通知するので、それに伴い処理をしたければ、on("changed"で監視すればいい
           li っで、trigerとonを使った部分が「処理の流れ」というfluxへと繋がる部分かなぁ
           li このアプリが持つべきオブジェクトを抽出し、プロパティやメソッドを設計すれば、あとはonXXX()で、そのオブジェクトを操作していけば良いっていう考えかた
-          li ちな、モデルはfluxのストアになる（ディスパッチャから叩かれるのでstoreと呼ばれる場所に位置することになる、逆説的だが。ビューの値とも直結するし。）
+          li ちな、モデルはfluxのストアになる（ディスパッチャから叩かれるのでstoreと呼ばれる場所に位置することになる、逆説的だが。データを保持しビューとも直結するし。）
           li oxXXX()で直接モデルを操作してるけど、fluxではディスパッチャを叩くことになる。
           li ディスパッチャは、ストアとしてモデルを複数持ち、アクションによって、適切なストアを操作してやる
 
@@ -175,7 +179,6 @@ block contents
         li inputting()は、inputタグに値が入力される度に変化するので、その都度、Inputオブジェクトの値を書き換えを行っている
             li 変更があったら、changedが発火されるので、ビューに反映される、という仕組みに流れる
         li changePriority()も同じで、選択されたpriorityに変更があったら、Inputオブジェクトの値を書き換えてあげ、あとはchanged on(changedと処理が流れる
-
 
 block append js
   script.

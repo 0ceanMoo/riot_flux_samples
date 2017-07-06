@@ -6,14 +6,18 @@ html(lang="ja")
   body
     block contents
       section
+
+    script(src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js")
+    script(src='https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js')
     block js
-      script(src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js")
-      script(src='https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js')
       script.
+        // riotタグ内でSASSが使えるようにするための処理
         riot.parsers.css.sass = function(tagName, css) {
           var result = Sass.compile(css);
           return result;
         };
+
+        // Dispatcherクラス
         class Dispatcher {
           get stores() { return this._stores; }
           addStore(key, store) { this._stores[key] = store }
@@ -35,6 +39,7 @@ html(lang="ja")
         }
         const dispatcher = new Dispatcher();
 
+        // Storeクラス
         class Store {
           constructor() {
             riot.observable(this)
@@ -44,4 +49,3 @@ html(lang="ja")
             this.trigger("changed", ...args);
           }
         }
-

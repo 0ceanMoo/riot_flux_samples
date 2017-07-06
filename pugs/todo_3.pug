@@ -4,7 +4,7 @@ block contents
     todo
     script(type="riot/tag")
       todo
-        h1 TODO
+        h1 TODO - riotタグを分割してみる
         todo-input(action="{opts.action}",dispatcher="{opts.dispatcher}")
         todo-list(action="{opts.action}", dispatcher="{opts.dispatcher}")
         |
@@ -16,8 +16,8 @@ block contents
 
           this.on("mount", function(){
             dispatcher.trigger(ACTION.TODO_ADD,
-              {title:"aaa", priority:"mid", done:true},
-              {title:"bbb", priority:"low", done:false},
+              {title:"riotで何か作ってみる", priority:"mid", done:true},
+              {title:"fluxを実践してみる",   priority:"low", done:false},
             );
           })
 
@@ -150,10 +150,6 @@ block append js
           this.changed();
         }
       }
-      clearAllTasks() {
-        this._tasks = [];
-        this.changed();
-      }
       clearCompletedTasks() {
         let tasks = this.tasks.filter(function(task, i){
           return !task.done
@@ -163,6 +159,7 @@ block append js
       }
     }
 
+    // アクション作成
     const ACTION = {
       TODO_ADD      : "TODO_ADD",
       TODO_TOGGLE   : "TODO_TOGGLE",
@@ -171,6 +168,7 @@ block append js
       INPUT_CHANGE  : "INPUT_CHANGE",
     };
 
+    // ディスパッチャの設定
     dispatcher.addStore("todo",   new TodoStore());
     dispatcher.addStore("input",  new InputStore());
     dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)

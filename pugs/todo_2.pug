@@ -4,7 +4,7 @@ block contents
     todo
     script(type="riot/tag")
       todo
-        h1 TODO
+        h1 TODO - fluxを使ってみる
         form(onsubmit="{addTask}")
           input(value="{stores.input.text}" onkeyup="{inputting}" placeholder="新規タスクを入力")
           select(onchange="{changePriority}")
@@ -42,25 +42,23 @@ block contents
             &.is_low { background: #66F; }
           }
         .
+          // 宣言と初期化
           const ACTION    = opts.action;
           const dispatcher= opts.dispatcher;
           this.stores     = dispatcher.stores
 
           this.on("mount", function(){
             dispatcher.trigger(ACTION.TODO_ADD,
-              {title:"aaa", priority:"mid", done:true},
-              {title:"bbb", priority:"low", done:false},
+              {title:"riotで何か作ってみる", priority:"mid", done:true},
+              {title:"fluxを実践してみる",   priority:"low", done:false},
             );
           })
 
-          // input
+          // ビュー
           this.stores.input.on( "changed", () => { this.update() });
+          this.stores.todo.on( "changed", () => { this.update() });
 
-          addTask(e) {
-            e.preventDefault()
-            e.preventUpdate = true;
-            dispatcher.trigger(ACTION.TODO_ADD, {title:this.stores.input.text, priority:this.stores.input.priority, done:false});
-          }
+          // アクション
           inputting(e) {
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.INPUT_WRITING, e.target.value)
@@ -69,19 +67,108 @@ block contents
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.INPUT_CHANGE, e.target.value)
           }
-
-          // todo
-          this.stores.todo.on( "changed", () => { this.update() });
-
+          addTask(e) {
+            e.preventDefault()
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_ADD, {title:this.stores.input.text, priority:this.stores.input.priority, done:false});
+          }
           toggleTask(i, e) {
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.TODO_TOGGLE, i)
           }
-
           clearCompletedTasks(e) {
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.TODO_CLEAR)
           }
+
+    h2 解説
+    p まず<a href="./todo_1.html">TODO - observableを使ってみる</a>を読んでることを前提とする。
+    ul
+      li 前準備
+        ul
+          li DispatcherクラスとStoreクラスは事前に用意した
+          li Dispatcherクラスについて
+            ul
+              li storesプロパティを持ち、複数のStoreを保持できる
+              li addStore()でstoreを追加できる
+              li とりあえずtriger()とon()だけ実装（offtとoneは簡単のため省略）
+              li Actionは保持しない（Dispatcherで知っておく必要はないと思うので）
+              li actionsプロパティは、on()で登録されたActionの管理のためのキーとして用いてるだけであって、アプリが持つのActionを把握している訳ではない
+          li Storesクラスについて
+            ul
+              li 各Storeクラスの基底クラスとして使われる
+              li コンストラクタで、observable化する
+              li changedを発火する、chnaged()を持つので、子クラスは、プロパティを変更したらchanged()をコールすること
+          li Storesの子クラスについて
+            ul
+              li 前節にある、InputクラスとTodoクラスは、Storeを継承し、Storeの子クラスとする
+              li 微妙に違うとこあるけど、基本的には継承しただけなので、両クラスの説明は省く
+          li Actionについて
+            ul
+              li このアプリが必要なActionをACTIONとして定義
+              li TODO_ADD、TODO_TOGGLE、TODO_CLEAR、INPUT_WRITING、INPUT_CHANGE とする
+          li DispatcherとStoreの紐付けについて
+            ul
+              li dispatcher.on(SOME_ACTION、でアクションを関して、アクションに応じたStoreの操作を登録しておく
+      li 初期化
+        ul
+          li riot.mount(タグ)では、DispatcherとACTIONを渡す
+          li コンストラクタ？で、引数のDispatcherとACTIONを、変数に格納しておく
+          li this.stores に Dispatcherが持っているstoresを格納
+          li this.storesは、sotres.todo.tasksのようにビューにそのまま埋め込まれる
+          li とりあえず、主だったデータは全てACTION、Dispatcher、Storeに入ってるので、余計な変数は定義しない
+          li on.("mount")で、Inputをinit()で初期化して、TodoにaddTask()でダミーのタスクを２つ追加
+      li アクション
+        ul
+          li onXXX()で発生する処理内で、Dispatcherを叩く
+          li その際、ACTIONと引数を渡す
+      li ディスパッチャ
+        ul
+          li ACTIONから叩かれることによって、Dispatcherは、on(ACTIONで登録したコールバックを呼び出す
+          li コールバック内では、Storeのプロパティに対しての操作が行われる
+      li ストア
+        ul
+          li ディスパッチャから、プロパティ操作を行われたストアは、changedを発火する
+      li ビュー
+          li ストアをsubscribeしてるビューは、プロパティの更新を知り、ビューに反映させる
+          li ビューにはStoreがそのままが埋め込まれていて、Storeのプロパティがそのまま表示されている
+          li なので、subscribe箇所では、いちいち、アクセス可能にしておいたビューのある箇所の値を書き換えるなんてことをせず、this.update()をするだけ良い
+    h2 まとめ
+    p ここまでくると、コードもだいぶスッキリした思う
+    p どこからであっても、Dispatcherに、ACTIONと引数を渡せば、関連するストアが更新され、subscribeしてるビューが更新される
+    p コンポネントを跨いでも、恐らく問題ないのでは？と思う
+
+    h2 fluxについて
+    ul
+     li Action -> Dispatcher -> Store -> View の４要素がある
+     li Actionとは
+       ul
+         li 内部APIを示すデータ構造
+         li 具体的には、ADD_TASKとかDEL_TASKみたいなイベント定義
+         li アクションとしてまとめて定義することで、一元管理と一覧性がでる
+     li Dispatcherとは
+       ul
+         li Actionから叩かれる
+         li Actionを、Storeに伝え(Dispache）るもの
+         li Observerは、Dispatcherの一種です
+         li １つのアプリで２つ以上作ってはいけません
+     li Storeとは
+       ul
+         li アプリのデータを保持します
+         li Actionを受け取るべき、Observableであるべきです
+         li Action以外で変更されるべきではありません
+         li Storeは変更されたら、changedイベントを発行する必要があります。
+     li Viewとは
+       ul
+         li ビューです
+         li Storeを表示します
+         li ただしStoreのデータをsubscribeしなければなりません（onchangeイベントを発行するので、subscribeするのは簡単です）
+
+    p ディスパッチャが分かりづらいかな。
+    p いくつかサンプル見たけど、どれもこれもStoreへのアクションをそのまま流してるだけで、適切なStoreへ呼び分けたりしてないので、余計意味がわからなくなる
+    p せめて、複雑な呼び分けができるような仕組みが実装されてれば「ああこのサンプルはそのままStoreに処理渡してるけど、そうじゃない事もできるんだな」って思えるけど、
+    p そんな処理はまったくなくて、本当にアクションをそのまま渡していて、そのそのまま渡す処理も、いちいちアクション１つ１つ書くのは面倒だから、forEachとかでループになっているだけって感じ
+    p まぁいいや、あれだと無駄に処理が遅くなるだけだと思うので、不採用。いずれ理解できたら採用するかな。
 
 block append js
   script.
@@ -132,10 +219,6 @@ block append js
           this.changed();
         }
       }
-      clearAllTasks() {
-        this._tasks = [];
-        this.changed();
-      }
       clearCompletedTasks() {
         let tasks = this.tasks.filter(function(task, i){
           return !task.done
@@ -145,6 +228,7 @@ block append js
       }
     }
 
+    // アクション作成
     const ACTION = {
       TODO_ADD      : "TODO_ADD",
       TODO_TOGGLE   : "TODO_TOGGLE",
@@ -153,6 +237,7 @@ block append js
       INPUT_CHANGE  : "INPUT_CHANGE",
     };
 
+    // ディスパッチャの設定
     dispatcher.addStore("todo",   new TodoStore());
     dispatcher.addStore("input",  new InputStore());
     dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)
