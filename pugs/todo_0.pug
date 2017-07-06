@@ -9,7 +9,7 @@ block contents
           input(ref="task" placeholder="新規タスクを入力")
           button 追加
         ul
-          li(each="{task in tasks}" class="{is_done: task.done}" onclick="{toggle.bind(this, task)}") {task.title}
+          li(each="{task in tasks}" class="{is_done: task.done}" onclick="{toggleTask.bind(this, task)}") {task.title}
         style.
           .is_done {
             text-decoration: line-through;
@@ -24,7 +24,7 @@ block contents
             this.tasks.push({title:this.refs.task.value, done:false})
             this.refs.task.value = ""
           }
-          toggle(task, e) {
+          toggleTask(task, e) {
             task.done = !task.done
           }
     h2 解説
@@ -41,8 +41,8 @@ block contents
           li すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる
       li トグル
         ul
-          li liタグにonclickに、toggle()を設定
-          li toggle()は、ステータスdoneを反転
+          li liタグにonclickに、toggleTask()を設定
+          li toggleTask()は、ステータスdoneを反転
           li すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる
     h2 雑感
     ul
