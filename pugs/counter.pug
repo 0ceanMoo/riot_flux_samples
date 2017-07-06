@@ -1,10 +1,10 @@
 extends ./_layout
 block contents
   main
-    timer
+    counter
     script(type="riot/tag")
-      timer
-        h1 Timer
+      counter
+        h1 counter
         div カウント数：
           span {stores.counter.num}
         div
@@ -60,4 +60,4 @@ block append js
     dispatcher.on(ACTION.COUNTER_DEC,  function(stores){stores.counter.dec()});
     dispatcher.on(ACTION.COUNTER_RESET,function(stores){stores.counter.reset()});
 
-    riot.mount("timer", {dispatcher:dispatcher, action:ACTION});
+    riot.mount("counter", {dispatcher:dispatcher, action:ACTION});
