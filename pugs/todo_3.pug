@@ -102,6 +102,8 @@ block contents
           }
 
 block append js
+  script(src='./riot-sass.js')
+  script(src='./riot-flux.js')
   script.
     class InputStore extends Store {
       DEFAULT_TEXT() { return "" }

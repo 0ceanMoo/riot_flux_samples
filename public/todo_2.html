@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head></head>
+  <meta charset="utf-8">
+  <title>riotでfluxを勉強してみる</title>
+  <body>
+    <main>
+      <todo></todo>
+      <script type="riot/tag">
+        <todo>
+          <h1>TODO - fluxを使ってみる</h1>
+          <form onsubmit="{addTask}">
+            <input value="{stores.input.text}" onkeyup="{inputting}" placeholder="新規タスクを入力">
+            <select onchange="{changePriority}">
+              <option value="low" selected="{stores.input.priority==='low' }">優先度：低</option>
+              <option value="mid" selected="{stores.input.priority==='mid' }">優先度：中</option>
+              <option value="high" selected="{stores.input.priority==='high'}">優先度：高</option>
+            </select>
+            <button disabled="{stores.input.text===''}">追加</button>
+          </form>
+          <ul>
+            <li class="{is_done: task.done}" each="{task, i in stores.todo.tasks}" onclick="{toggleTask.bind(this, i)}">
+              <input type="checkbox" checked="{task.done}"/><span class="icon is_high" if="{task.priority==='high'}">高</span><span class="icon is_mid" if="{task.priority==='mid'}">中</span><span class="icon is_low" if="{task.priority==='low'}">低</span>{task.title}
+            </li>
+          </ul>
+          <div>
+            <button disabled="{!stores.todo.hasCompletedTasks}" onclick="{clearCompletedTasks}">完了したタスクを削除</button>
+          </div>
+          <style type="sass">
+            .is_done {
+              text-decoration: line-through;
+              color: #ccc;
+              .icon {
+                &.is_high, &.is_mid, &.is_low {
+                  background: #ccc;
+                }
+              }
+            }
+            .icon {
+              color:white;
+              display: inline-block;
+              margin: 0 5px;
+              padding: 0 3px;
+              &.is_high{ background: #F66; }
+              &.is_mid { background: #CC6; }
+              &.is_low { background: #66F; }
+            }
+          </style>// 宣言と初期化
+          const ACTION    = opts.action;
+          const dispatcher= opts.dispatcher;
+          this.stores     = dispatcher.stores
+          
+          this.on("mount", function(){
+            dispatcher.trigger(ACTION.TODO_ADD,
+              {title:"riotで何か作ってみる", priority:"mid", done:true},
+              {title:"fluxを実践してみる",   priority:"low", done:false},
+            );
+          })
+          
+          // ビュー
+          this.stores.input.on( "changed", () => { this.update() });
+          this.stores.todo.on( "changed", () => { this.update() });
+          
+          // アクション
+          inputting(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.INPUT_WRITING, e.target.value)
+          }
+          changePriority(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.INPUT_CHANGE, e.target.value)
+          }
+          addTask(e) {
+            e.preventDefault()
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_ADD, {title:this.stores.input.text, priority:this.stores.input.priority, done:false});
+          }
+          toggleTask(i, e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_TOGGLE, i)
+          }
+          clearCompletedTasks(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.TODO_CLEAR)
+          }
+          
+        </todo>
+      </script>
+      <h2>解説</h2>
+      <p>まず<a href="./todo_1.html">TODO - observableを使ってみる</a>を読んでることを前提とする。</p>
+      <ul>
+        <li>前準備
+          <ul>
+            <li>DispatcherクラスとStoreクラスは事前に用意した</li>
+            <li>Dispatcherクラスについて
+              <ul>
+                <li>storesプロパティを持ち、複数のStoreを保持できる</li>
+                <li>addStore()でstoreを追加できる</li>
+                <li>とりあえずtriger()とon()だけ実装（offtとoneは簡単のため省略）</li>
+                <li>Actionは保持しない（Dispatcherで知っておく必要はないと思うので）</li>
+                <li>actionsプロパティは、on()で登録されたActionの管理のためのキーとして用いてるだけであって、アプリが持つのActionを把握している訳ではない</li>
+              </ul>
+            </li>
+            <li>Storesクラスについて
+              <ul>
+                <li>各Storeクラスの基底クラスとして使われる</li>
+                <li>コンストラクタで、observable化する</li>
+                <li>changedを発火する、chnaged()を持つので、子クラスは、プロパティを変更したらchanged()をコールすること</li>
+              </ul>
+            </li>
+            <li>Storesの子クラスについて
+              <ul>
+                <li>前節にある、InputクラスとTodoクラスは、Storeを継承し、Storeの子クラスとする</li>
+                <li>微妙に違うとこあるけど、基本的には継承しただけなので、両クラスの説明は省く</li>
+              </ul>
+            </li>
+            <li>Actionについて
+              <ul>
+                <li>このアプリが必要なActionをACTIONとして定義</li>
+                <li>TODO_ADD、TODO_TOGGLE、TODO_CLEAR、INPUT_WRITING、INPUT_CHANGE とする</li>
+              </ul>
+            </li>
+            <li>DispatcherとStoreの紐付けについて
+              <ul>
+                <li>dispatcher.on(SOME_ACTION、でアクションを関して、アクションに応じたStoreの操作を登録しておく</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>初期化
+          <ul>
+            <li>riot.mount(タグ)では、DispatcherとACTIONを渡す</li>
+            <li>コンストラクタ？で、引数のDispatcherとACTIONを、変数に格納しておく</li>
+            <li>this.stores に Dispatcherが持っているstoresを格納</li>
+            <li>this.storesは、sotres.todo.tasksのようにビューにそのまま埋め込まれる</li>
+            <li>とりあえず、主だったデータは全てACTION、Dispatcher、Storeに入ってるので、余計な変数は定義しない</li>
+            <li>on.("mount")で、Inputをinit()で初期化して、TodoにaddTask()でダミーのタスクを２つ追加</li>
+          </ul>
+        </li>
+        <li>アクション
+          <ul>
+            <li>onXXX()で発生する処理内で、Dispatcherを叩く</li>
+            <li>その際、ACTIONと引数を渡す</li>
+          </ul>
+        </li>
+        <li>ディスパッチャ
+          <ul>
+            <li>ACTIONから叩かれることによって、Dispatcherは、on(ACTIONで登録したコールバックを呼び出す</li>
+            <li>コールバック内では、Storeのプロパティに対しての操作が行われる</li>
+          </ul>
+        </li>
+        <li>ストア
+          <ul>
+            <li>ディスパッチャから、プロパティ操作を行われたストアは、changedを発火する</li>
+          </ul>
+        </li>
+        <li>ビュー
+          <li>ストアをsubscribeしてるビューは、プロパティの更新を知り、ビューに反映させる</li>
+          <li>ビューにはStoreがそのままが埋め込まれていて、Storeのプロパティがそのまま表示されている</li>
+          <li>なので、subscribe箇所では、いちいち、アクセス可能にしておいたビューのある箇所の値を書き換えるなんてことをせず、this.update()をするだけ良い</li>
+        </li>
+      </ul>
+      <h2>まとめ</h2>
+      <p>ここまでくると、コードもだいぶスッキリした思う</p>
+      <p>どこからであっても、Dispatcherに、ACTIONと引数を渡せば、関連するストアが更新され、subscribeしてるビューが更新される</p>
+      <p>コンポネントを跨いでも、恐らく問題ないのでは？と思う</p>
+      <h2>fluxについて</h2>
+      <ul>
+        <li>Action -> Dispatcher -> Store -> View の４要素がある</li>
+        <li>Actionとは
+          <ul>
+            <li>内部APIを示すデータ構造</li>
+            <li>具体的には、ADD_TASKとかDEL_TASKみたいなイベント定義</li>
+            <li>アクションとしてまとめて定義することで、一元管理と一覧性がでる</li>
+          </ul>
+        </li>
+        <li>Dispatcherとは
+          <ul>
+            <li>Actionから叩かれる</li>
+            <li>Actionを、Storeに伝え(Dispache）るもの</li>
+            <li>Observerは、Dispatcherの一種です</li>
+            <li>１つのアプリで２つ以上作ってはいけません</li>
+          </ul>
+        </li>
+        <li>Storeとは
+          <ul>
+            <li>アプリのデータを保持します</li>
+            <li>Actionを受け取るべき、Observableであるべきです</li>
+            <li>Action以外で変更されるべきではありません</li>
+            <li>Storeは変更されたら、changedイベントを発行する必要があります。</li>
+          </ul>
+        </li>
+        <li>Viewとは
+          <ul>
+            <li>ビューです</li>
+            <li>Storeを表示します</li>
+            <li>ただしStoreのデータをsubscribeしなければなりません（onchangeイベントを発行するので、subscribeするのは簡単です）</li>
+          </ul>
+        </li>
+      </ul>
+      <p>ディスパッチャが分かりづらいかな。</p>
+      <p>いくつかサンプル見たけど、どれもこれもStoreへのアクションをそのまま流してるだけで、適切なStoreへ呼び分けたりしてないので、余計意味がわからなくなる</p>
+      <p>せめて、複雑な呼び分けができるような仕組みが実装されてれば「ああこのサンプルはそのままStoreに処理渡してるけど、そうじゃない事もできるんだな」って思えるけど、</p>
+      <p>そんな処理はまったくなくて、本当にアクションをそのまま渡していて、そのそのまま渡す処理も、いちいちアクション１つ１つ書くのは面倒だから、forEachとかでループになっているだけって感じ</p>
+      <p>まぁいいや、あれだと無駄に処理が遅くなるだけだと思うので、不採用。いずれ理解できたら採用するかな。</p>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="./riot-sass.js"></script>
+    <script src="./riot-flux.js"></script>
+    <script>
+      class InputStore extends Store {
+        DEFAULT_TEXT() { return "" }
+        DEFAULT_PRIO() { return "mid" }
+      
+        get text() { return this._text }
+        set text(text) { this._text = text; this.changed() }
+        get priority() { return this._priority }
+        set priority(priority) { this._priority = priority; this.changed() }
+      
+        constructor() {
+          super();
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+        }
+        init() {
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+          this.changed();
+        }
+      }
+      
+      class TodoStore extends Store {
+        get tasks() { return this._tasks; }
+        get hasCompletedTasks() {
+          let completed = this.tasks.some(function(task, i){
+            return task.done
+          });
+          return completed;
+        }
+        constructor() {
+          super();
+          this._tasks = [];
+        }
+      
+        addTask(...tasks) { //console.log(tasks)
+          for ( const task of tasks  ) {
+            this._tasks.push(task);
+          }
+          this.changed();
+        }
+        toggle(i) {
+          let task = this._tasks[i];
+          if ( task ) {
+            task.done = !task.done;
+            this.changed();
+          }
+        }
+        clearCompletedTasks() {
+          let tasks = this.tasks.filter(function(task, i){
+            return !task.done
+          });
+          this._tasks = tasks;
+          this.changed();
+        }
+      }
+      
+      // アクション作成
+      const ACTION = {
+        TODO_ADD      : "TODO_ADD",
+        TODO_TOGGLE   : "TODO_TOGGLE",
+        TODO_CLEAR    : "TODO_CLEAR",
+        INPUT_WRITING : "INPUT_WRITING",
+        INPUT_CHANGE  : "INPUT_CHANGE",
+      };
+      
+      // ディスパッチャの設定
+      dispatcher.addStore("todo",   new TodoStore());
+      dispatcher.addStore("input",  new InputStore());
+      dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)
+        stores.todo.addTask(...tasks);
+        stores.input.init()
+      });
+      dispatcher.on(ACTION.TODO_TOGGLE, function(stores, i){
+        stores.todo.toggle(i);
+      });
+      dispatcher.on(ACTION.TODO_CLEAR, function(stores){
+        stores.todo.clearCompletedTasks();
+      });
+      dispatcher.on(ACTION.INPUT_WRITING, function(stores, text){
+        stores.input.text = text;
+      });
+      dispatcher.on(ACTION.INPUT_CHANGE, function(stores, priority){
+        stores.input.priority = priority
+      });
+      
+      riot.mount("todo", {dispatcher:dispatcher, action:ACTION});
+    </script>
+  </body>
+</html>

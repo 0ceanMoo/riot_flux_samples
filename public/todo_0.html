@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head></head>
+  <meta charset="utf-8">
+  <title>riotでfluxを勉強してみる</title>
+  <body>
+    <main>
+      <todo></todo>
+      <script type="riot/tag">
+        <todo>
+          <h1>TODO - 普通の使い方</h1>
+          <form onsubmit="{addTask}">
+            <input ref="task" placeholder="新規タスクを入力">
+            <button>追加</button>
+          </form>
+          <ul>
+            <li class="{is_done: task.done}" each="{task in tasks}" onclick="{toggleTask.bind(this, task)}">{task.title}</li>
+          </ul>
+          <style>
+            .is_done {
+              text-decoration: line-through;
+              color: #ccc;
+          </style>this.tasks = [
+            {title:"riotで何か作ってみる",  done:true},
+            {title:"fluxを実践してみる",    done:false},
+          ];
+          addTask(e) {
+            e.preventDefault()
+            this.tasks.push({title:this.refs.task.value, done:false})
+            this.refs.task.value = ""
+          }
+          toggleTask(task, e) {
+            task.done = !task.done
+          }
+        </todo>
+      </script>
+      <h2>解説</h2>
+      <ul>
+        <li>初期化
+          <ul>
+            <li>riotのコンストラクタ？のとこで、this.tasksに2つのタスクを追加</li>
+            <li>liタグに、this.tasksをループで展開</li>
+          </ul>
+        </li>
+        <li>タスク追加
+          <ul>
+            <li>フォームのonsubmitにaddTask()を設定</li>
+            <li>addTask()は、入力されたタスク（this.refs.task.value）をthis.taskに追加</li>
+            <li>this.refs.task.value を空にする</li>
+            <li>すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる</li>
+          </ul>
+        </li>
+        <li>トグル
+          <ul>
+            <li>liタグにonclickに、toggleTask()を設定</li>
+            <li>toggleTask()は、ステータスdoneを反転</li>
+            <li>すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる</li>
+          </ul>
+        </li>
+      </ul>
+      <h2>雑感</h2>
+      <ul>
+        <li>fluxが何なのかイマイチ分からないが、十分分かりやすいし、シンプルだ。</li>
+        <li>this.tasksのようにコンストラクタ？部分で必要な変数を定義しておくだけで、情報も一箇所にまとまるし、何が困るのだろう？</li>
+      </ul>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script>riot.mount("todo")</script>
+  </body>
+</html>

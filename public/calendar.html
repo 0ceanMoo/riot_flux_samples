@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head></head>
+  <meta charset="utf-8">
+  <title>riotでfluxを勉強してみる</title>
+  <body>
+    <main>
+      <calendar></calendar>
+      <script type="riot/tag">
+        <calendar>
+          <h1>カレンダー</h1>
+          <div>
+            <button onclick="{prev}">前月</button><span> {stores.calendar.year} 年 {stores.calendar.month} 月</span>
+            <button onclick="{next}">来月</button>
+          </div>
+          <div>
+            <button onclick="{today}">今日</button>
+          </div>
+          <div><span each="{day in stores.calendar.days_of_month}">{day}、</span></div>
+          <style>
+            button {
+              background: #ccc;
+            }
+          </style>const ACTION    = opts.action;
+          const dispatcher= opts.dispatcher;
+          //this.stores     = dispatcher.getStores();
+          this.stores     = dispatcher.stores
+          
+          this.stores.calendar.on( "changed", () => { this.update() });
+          
+          prev(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.CALENDAR_PREV_MONTH)
+          }
+          next(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.CALENDAR_NEXT_MONTH)
+          }
+          today(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.CALENDAR_TODAY)
+          }
+          
+        </calendar>
+      </script>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script>
+      class CalendarStore extends Store {
+        get year()   { return this._year }
+        get month()  { return this._month }
+        get days_of_month() {
+          let days = [];
+          for ( let i=1; i<=this.last_day_of_month; i++ ) {
+            days.push(i)
+          }
+          return days;
+        }
+        get last_day_of_month() {
+          return new Date(this.year, this.month, 0).getDate();
+        }
+      
+        constructor(num=0) {
+          super();
+          const today = new Date();
+          this._year  = today.getFullYear();
+          this._month = today.getMonth() + 1;
+        }
+        reset() {
+          const today = new Date();
+          this._year  = today.getFullYear();
+          this._month = today.getMonth() + 1;
+          this.changed()
+        }
+        nextMonth()   {
+          this._month++;
+          if ( this._month > 12 ) {
+            this._year += 1;
+            this._month = 1;
+          }
+          this.changed()
+        }
+        prevMonth()   {
+          this._month--;
+          if ( this._month < 1 ) {
+            this._year -= 1;
+            this._month = 12;
+          }
+          this.changed()
+        }
+      }
+      
+      const ACTION = {
+        CALENDAR_NEXT_MONTH   : "CALENDAR_NEXT_MONTH",
+        CALENDAR_PREV_MONTH   : "CALENDAR_PREV_MONTH",
+      };
+      
+      let calendar = new CalendarStore();
+      dispatcher.addStore("calendar", calendar);
+      dispatcher.on(ACTION.CALENDAR_PREV_MONTH, function(stores){stores.calendar.prevMonth()});
+      dispatcher.on(ACTION.CALENDAR_NEXT_MONTH, function(stores){stores.calendar.nextMonth()});
+      dispatcher.on(ACTION.CALENDAR_TODAY,      function(stores){stores.calendar.reset()});
+      
+      riot.mount("calendar", {dispatcher:dispatcher, action:ACTION});
+    </script>
+  </body>
+</html>

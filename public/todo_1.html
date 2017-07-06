@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head></head>
+  <meta charset="utf-8">
+  <title>riotでfluxを勉強してみる</title>
+  <body>
+    <main>
+      <todo></todo>
+      <script type="riot/tag">
+        <todo>
+          <h1>TODO - observableを使ってみる</h1>
+          <form onsubmit="{addTask}">
+            <input value="{task}" onkeyup="{inputting}" placeholder="新規タスクを入力">
+            <select onchange="{changePriority}">
+              <option value="low" selected="{priority==='low' }">優先度：低</option>
+              <option value="mid" selected="{priority==='mid' }">優先度：中</option>
+              <option value="high" selected="{priority==='high'}">優先度：高</option>
+            </select>
+            <button disabled="{task===''}">追加</button>
+          </form>
+          <ul>
+            <li class="{is_done: task.done}" each="{task, i in tasks}" onclick="{toggleTask.bind(this, i)}">
+              <input type="checkbox" checked="{task.done}"/><span class="icon is_high" if="{task.priority==='high'}">高</span><span class="icon is_mid" if="{task.priority==='mid'}">中</span><span class="icon is_low" if="{task.priority==='low'}">低</span>{task.title}
+            </li>
+          </ul>
+          <div>
+            <button disabled="{!hasCompletedTasks}" onclick="{clearCompletedTasks}">完了したタスクを削除</button>
+          </div>
+          <style type="sass">
+            .is_done {
+              text-decoration: line-through;
+              color: #ccc;
+              .icon {
+                &.is_high, &.is_mid, &.is_low {
+                  background: #ccc;
+                }
+              }
+            }
+            .icon {
+              color:white;
+              display: inline-block;
+              margin: 0 5px;
+              padding: 0 3px;
+              &.is_high{ background: #F66; }
+              &.is_mid { background: #CC6; }
+              &.is_low { background: #66F; }
+            }
+          </style>// 宣言や初期化
+          this.input  = opts.input;
+          this.todo   = opts.todo;
+          
+          this.task     = ""
+          this.priority = ""
+          this.tasks  = []
+          
+          this.on("mount", function(){
+            this.input.init()
+            this.todo.addTask(
+              {title:"riotで何か作ってみる", priority:"mid", done:true},
+              {title:"fluxを実践してみる",   priority:"low", done:false},
+            );
+          })
+          
+          // 関数（オブジェクト操作）
+          inputting(e) {
+            this.input.text = e.target.value
+          }
+          changePriority(e) {
+            this.input.priority = e.target.value
+          }
+          addTask(e) {
+            e.preventDefault()
+            this.todo.addTask({title:this.task, priority:this.priority, done:false});
+          }
+          toggleTask(i, e) {
+            this.todo.toggle(i);
+          }
+          clearCompletedTasks(e) {
+            this.todo.clearCompletedTasks();
+          }
+          
+          // 監視＆ビュー操作
+          this.input.on("changed", (text, priority) => {
+            this.update({
+              task    : text,
+              priority: priority,
+            });
+          });
+          this.todo.on("changed", (tasks, hasCompletedTasks) => {
+            this.tasks  = tasks
+            this.hasCompletedTasks = hasCompletedTasks
+            this.input.init()
+            this.update()
+          });
+          
+        </todo>
+      </script>
+      <h2>解説</h2>
+      <p>まず<a href="./todo_0.html">TODO - 普通の使い方</a>を読んでることを前提とする。</p>
+      <ul>
+        <li>前準備
+          <ul>
+            <li>observableを使ったクラスを作る</li>
+            <li>具体的には、Inputクラスと、Todoクラスがそう。</li>
+            <li>これで両クラスに、trigger(イベント, 引数) と on(イベント, callback(引数) という機能が実装された</li>
+            <li>Inputクラスの仕様と実装
+              <ul>
+                <li>このクラスは、フォームのinputタグとselectタグの値を管理するのが目的</li>
+                <li>textプロパティとpriorityプロパティを持つ</li>
+                <li>っで両方とも、setとgetなどのアクセサを持つ</li>
+                <li>set系のアクセサで、プロパティに変更があったら「changed」イベントを発火させる</li>
+              </ul>
+            </li>
+            <li>ToDoクラスの仕様と実装
+              <ul>
+                <li>このクラスは、タスクを管理するのが目的</li>
+                <li>tasksプロパティを持つ</li>
+                <li>addTask()、toggle()で、タスクの追加や状態を操作できる</li>
+                <li>終了済</li>
+              </ul>
+            </li>
+            <li>まとめると、それなりの粒度があり重要な要素なので、オブジェクトとして定義して、必要なプロパティと操作インターフェイスを用意しただけ</li>
+            <li>riotとは関係なく、そういう機能を持ってて、何からでも利用できるよう設計されたクラスってのが重要</li>
+            <li>ってことで、riotはこの汎用的なクラスのインスタンスオブジェクトを操作していくこととする</li>
+          </ul>
+        </li>
+        <li>前回のと違うとこ
+          <ul>
+            <li>タスクにpriorytyをthis.priority と追加し、このriotタグのプロパティとする</li>
+            <li>完了したタスクを全て削除する機能を追加</li>
+            <li>入力したタスクは、refsでの参照をやめ、this.taskを定義し、タスクの値（inputタグのvalue）と紐付ける</li>
+            <li>整理すると、このriotタグが持つプロパティは、task、tasks、priorityとなる</li>
+            <li>これらの値に対して書き換えを行うことで、ビューはその変更を反映させることになる</li>
+          </ul>
+        </li>
+        <li>初期化
+          <ul>
+            <li>コンストラクタ？でInputのオブジェクト(以降Input)をthis.inputに、Todoのオブジェクト(以降Todo)をthis.todoに格納</li>
+            <li>this.task、this.priority、this.tasksを宣言＆空で初期化</li>
+            <li>on.("mount")で、Inputをinit()で初期化して、TodoにaddTask()でダミーのタスクを２つ追加</li>
+            <li>軽くいっておくと、InputもTodoも値に変更があったので、この時点でchangedが発火されることになる</li>
+            <li>っで、オブジェクト.on("changed", でそれぞれのオブジェクトは監視されているので、そこでriotタグのプロパティを書き換え、ビューを更新する</li>
+          </ul>
+        </li>
+        <li>タスク追加
+          <ul>
+            <li>フォームのonsubmitにaddTask()を設定</li>
+            <li>addTask()は、入力されたタスク（this.task）をTodoにaddTask()で追加する</li>
+            <li>あとは、Todoがchangedを発火し、Todo.on(changeに定義した、ビュー更新処理が走る</li>
+          </ul>
+        </li>
+        <li>トグル
+          <ul>
+            <li>liタグにonclickに、toggle()を設定</li>
+            <li>toggle()は、TodoにtoggleTask()する</li>
+            <li>あとは、Todoがchangedを発火し、Todo.on(changeに定義した、ビュー更新処理が走る</li>
+          </ul>
+        </li>
+        <li>完了タスクの削除
+          <ul>
+            <li>削除ボタンのonclickに、clearCompletedTasks()を設定</li>
+            <li>clearCompletedTasks()は、TodoのclearCompletedTasks()を実行する</li>
+            <li>あとは、Todoがchangedを発火し、Todo.on(changeに定義した、ビュー更新処理が走る</li>
+          </ul>
+        </li>
+      </ul>
+      <h2>設計についての説明</h2>
+      <ul>
+        <li>クラスを用いる事について
+          <ul>
+            <li>途中までは、何これ？クラスとか使っちゃって、複雑化してるだけじゃない？何が便利なの？？？って思うかもしれない</li>
+            <li>っが、Todoを操作する処理を３つ書いたので、なんとなく便利さが分かるのでは？と。</li>
+            <li>ビューの操作は、全てon("changed"  内に集まり、タグからのonXXX()で呼ばれる関数内では、Todo、Inputのオブジェクトに対してしか処理を行っていないのが分かると思う。</li>
+            <li>タグ内に埋め込んだonXXX()の中で、直接ビューを操作するのではなく、オブジェクトを操作すれば良い。</li>
+            <li>っで、値を管理するのも、オブジェクトに任せているので</li>
+            <li>ビューに関わる値、this.task、this.tasks、this.priority は、InputまたはTodoオブジェクトの値をそのまま格納しているだけにすぎない</li>
+            <li>クラスはどういう値を持ち、どう操作されるべきか？ってのが予め決まっているので、それ以外の操作はできない。</li>
+            <li>なのでデタラメな事は起こらないし、値も出来ることもリスト化されていて逆に都合がいい
+              <ul>
+                <li>まぁここは普通に、オブジェクト指向を取り入れただけかな</li>
+                <li>型がオブジェクトだったり、オブジェクトが扱える言語だからって、オブジェクト指向ではないよ</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>仕組み・処理のフロー、fluxへ
+          <ul>
+            <li>今回ので、モデルとビューが分割された形になる</li>
+            <li>オブジェクトは、自らの値に変更があったら、changedで変更があったことを必ず通知するので、それに伴い処理をしたければ、on("changed"で監視すればいい</li>
+            <li>っで、trigerとonを使った部分が「処理の流れ」というfluxへと繋がる部分かなぁ</li>
+            <li>このアプリが持つべきオブジェクトを抽出し、プロパティやメソッドを設計すれば、あとはonXXX()で、そのオブジェクトを操作していけば良いっていう考えかた</li>
+            <li>ちな、モデルはfluxのストアになる（ディスパッチャから叩かれるのでstoreと呼ばれる場所に位置することになる、逆説的だが。データを保持しビューとも直結するし。）</li>
+            <li>oxXXX()で直接モデルを操作してるけど、fluxではディスパッチャを叩くことになる。</li>
+            <li>ディスパッチャは、ストアとしてモデルを複数持ち、アクションによって、適切なストアを操作してやる</li>
+          </ul>
+        </li>
+      </ul>
+      <h2>あとがき</h2>
+      <ul>
+        <li>「observableを使ってみる」ってのがテーマだったけど、ビューとモデルの分離になったなぁ</li>
+        <li>でもobservableを実装したクラスはモデルになってしまうし、発火されるで行われる処理ってどうしてもビュー操作になるので、まぁいいかな。</li>
+      </ul>
+      <p>解説の不足分をば
+        <ul>
+          <li>inputting()とchangePriority()のとこをサラっと。</li>
+          <li>inputting()は、inputタグに値が入力される度に変化するので、その都度、Inputオブジェクトの値を書き換えを行っている
+            <li>変更があったら、changedが発火されるので、ビューに反映される、という仕組みに流れる</li>
+          </li>
+          <li>changePriority()も同じで、選択されたpriorityに変更があったら、Inputオブジェクトの値を書き換えてあげ、あとはchanged on(changedと処理が流れる</li>
+        </ul>
+      </p>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="./riot-sass.js"></script>
+    <script>
+      class Input {
+        DEFAULT_TEXT() { return "" }
+        DEFAULT_PRIO() { return "mid" }
+      
+        get text() { return this._text }
+        set text(text) { this._text = text; this.changed() }
+        get priority() { return this._priority }
+        set priority(priority) { this._priority = priority; this.changed() }
+      
+        constructor() {
+          riot.observable(this)
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+        }
+        changed() { //console.log(this.text)
+          this.trigger("changed", this.text, this.priority)
+        }
+        init() {
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+          this.changed();
+        }
+      }
+      
+      class Todo {
+        get tasks() { return this._tasks; }
+        constructor() {
+          riot.observable(this)
+          this._tasks = [];
+        }
+      
+        changed() { //console.log(this.tasks)
+          this.trigger("changed", this.tasks, this.hasCompletedTasks())
+        }
+      
+        addTask(...tasks) { //console.log(tasks)
+          for ( let task of tasks  ) {
+            this._tasks.push(task);
+          }
+          this.changed();
+        }
+        toggle(i) {
+          let task = this._tasks[i];
+          if ( task ) {
+            task.done = !task.done;
+            this.changed();
+          }
+        }
+        clearCompletedTasks() {
+          let tasks = this.tasks.filter(function(task, i){
+            return !task.done
+          });
+          this._tasks = tasks;
+          this.changed();
+        }
+        hasCompletedTasks() {
+          let completed = this.tasks.some(function(task, i){
+            return task.done
+          });
+          return completed;
+        }
+      }
+      
+      let todo  = new Todo();
+      let input = new Input();
+      //todo.addTask({title:"Test",done:false}, {title:"Hoge", done:false});
+      
+      riot.mount("todo", {todo:todo, input:input});
+    </script>
+  </body>
+</html>

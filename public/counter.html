@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head></head>
+  <meta charset="utf-8">
+  <title>riotでfluxを勉強してみる</title>
+  <body>
+    <main>
+      <counter></counter>
+      <script type="riot/tag">
+        <counter>
+          <h1>counter</h1>
+          <div>カウント数：<span>{stores.counter.num}</span></div>
+          <div>
+            <button onclick="{inc}">+1</button>
+            <button onclick="{dec}">-1</button>
+            <button onclick="{reset}">リセット</button>
+          </div>
+          <style>
+            button {
+              background: #ccc;
+            }
+          </style>const ACTION    = opts.action;
+          const dispatcher= opts.dispatcher;
+          this.stores     = dispatcher.stores
+          
+          this.stores.counter.on( "changed", () => { this.update() });
+          
+          inc(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_INC)
+          }
+          dec(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_DEC)
+          }
+          reset(e) {
+            e.preventUpdate = true;
+            dispatcher.trigger(ACTION.COUNTER_RESET)
+          }
+          
+        </counter>
+      </script>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script>
+      class CounterStore extends Store {
+        get num() { return this._num }
+        constructor(num=0) {
+          super();
+          this._num = num;
+        }
+        inc()   { this._num++; this.changed() }
+        dec()   { this._num--; this.changed() }
+        reset() { this._num=0; this.changed() }
+      }
+      
+      const ACTION = {
+        COUNTER_INC   : "COUNTER_INC",
+        COUNTER_DEC   : "COUNTER_DEC",
+        COUNTER_RESET : "COUNTER_RESET",
+      };
+      
+      let counter = new CounterStore(99);
+      dispatcher.addStore("counter", counter);
+      dispatcher.on(ACTION.COUNTER_INC,  function(stores){stores.counter.inc()});
+      dispatcher.on(ACTION.COUNTER_DEC,  function(stores){stores.counter.dec()});
+      dispatcher.on(ACTION.COUNTER_RESET,function(stores){stores.counter.reset()});
+      
+      riot.mount("counter", {dispatcher:dispatcher, action:ACTION});
+    </script>
+  </body>
+</html>

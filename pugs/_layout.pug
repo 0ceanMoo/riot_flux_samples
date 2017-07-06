@@ -6,46 +6,6 @@ html(lang="ja")
   body
     block contents
       section
-
     script(src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js")
     script(src='https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js')
     block js
-      script.
-        // riotタグ内でSASSが使えるようにするための処理
-        riot.parsers.css.sass = function(tagName, css) {
-          var result = Sass.compile(css);
-          return result;
-        };
-
-        // Dispatcherクラス
-        class Dispatcher {
-          get stores() { return this._stores; }
-          addStore(key, store) { this._stores[key] = store }
-          constructor(...stores) {
-            this._stores  = {}
-            this._actions = {}
-          }
-
-          trigger(action, ...data) {
-            let callback = this._actions[action]
-            if ( typeof callback === "function" )
-              callback(this.stores, ...data)
-            //else
-            //  console.warn("コールバック関数が登録されていません。")
-          }
-          on(action, callback) {
-            this._actions[action] = callback
-          }
-        }
-        const dispatcher = new Dispatcher();
-
-        // Storeクラス
-        class Store {
-          constructor() {
-            riot.observable(this)
-          }
-          changed(...args) {  //console.log(args)
-            //console.log(new Error().stack)
-            this.trigger("changed", ...args);
-          }
-        }

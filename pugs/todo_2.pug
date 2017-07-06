@@ -171,6 +171,8 @@ block contents
     p まぁいいや、あれだと無駄に処理が遅くなるだけだと思うので、不採用。いずれ理解できたら採用するかな。
 
 block append js
+  script(src='./riot-sass.js')
+  script(src='./riot-flux.js')
   script.
     class InputStore extends Store {
       DEFAULT_TEXT() { return "" }
