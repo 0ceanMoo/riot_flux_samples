@@ -102,9 +102,10 @@ block contents
           }
 
 block append js
-  script(src='./riot-sass.js')
-  script(src='./riot-flux.js')
+  script(src='/js/riot-sass.js')
+  script(src='/js/riot-flux.js')
   script.
+    // InputStoreクラスを定義
     class InputStore extends Store {
       DEFAULT_TEXT() { return "" }
       DEFAULT_PRIO() { return "mid" }
@@ -126,6 +127,7 @@ block append js
       }
     }
 
+    // TodoStoreクラスを定義
     class TodoStore extends Store {
       get tasks() { return this._tasks; }
       get hasCompletedTasks() {
@@ -190,4 +192,5 @@ block append js
       stores.input.priority = priority
     });
 
+    // riotタグをマウント
     riot.mount("todo", {dispatcher:dispatcher, action:ACTION});

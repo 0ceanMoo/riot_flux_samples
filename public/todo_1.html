@@ -214,6 +214,7 @@
     <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
     <script src="./riot-sass.js"></script>
     <script>
+      // Inputクラスを定義
       class Input {
         DEFAULT_TEXT() { return "" }
         DEFAULT_PRIO() { return "mid" }
@@ -238,6 +239,7 @@
         }
       }
       
+      // Todoクラスを定義
       class Todo {
         get tasks() { return this._tasks; }
         constructor() {
@@ -277,10 +279,12 @@
         }
       }
       
+      // InputとTodoのインスタンス生成
       let todo  = new Todo();
       let input = new Input();
       //todo.addTask({title:"Test",done:false}, {title:"Hoge", done:false});
       
+      // riotタグをマウント
       riot.mount("todo", {todo:todo, input:input});
     </script>
   </body>

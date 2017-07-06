@@ -105,9 +105,10 @@
     </main>
     <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
     <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
-    <script src="./riot-sass.js"></script>
-    <script src="./riot-flux.js"></script>
+    <script src="/js/riot-sass.js"></script>
+    <script src="/js/riot-flux.js"></script>
     <script>
+      // InputStoreクラスを定義
       class InputStore extends Store {
         DEFAULT_TEXT() { return "" }
         DEFAULT_PRIO() { return "mid" }
@@ -129,6 +130,7 @@
         }
       }
       
+      // TodoStoreクラスを定義
       class TodoStore extends Store {
         get tasks() { return this._tasks; }
         get hasCompletedTasks() {
@@ -193,6 +195,7 @@
         stores.input.priority = priority
       });
       
+      // riotタグをマウント
       riot.mount("todo", {dispatcher:dispatcher, action:ACTION});
     </script>
   </body>
