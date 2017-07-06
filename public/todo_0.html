@@ -34,6 +34,14 @@
           }
         </todo>
       </script>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script>
+      // riotタグをマウント
+      riot.mount("todo")
+    </script>
+    <section>
       <h2>解説</h2>
       <ul>
         <li>初期化
@@ -63,12 +71,6 @@
         <li>fluxが何なのかイマイチ分からないが、十分分かりやすいし、シンプルだ。</li>
         <li>this.tasksのようにコンストラクタ？部分で必要な変数を定義しておくだけで、情報も一箇所にまとまるし、何が困るのだろう？</li>
       </ul>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
-    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
-    <script>
-      // riotタグをマウント
-      riot.mount("todo")
-    </script>
+    </section>
   </body>
 </html>

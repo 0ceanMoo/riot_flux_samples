@@ -92,9 +92,87 @@
             this.input.init()
             this.update()
           });
-          
         </todo>
       </script>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="/js/riot-sass.js"></script>
+    <script>
+      // Inputクラスを定義
+      class Input {
+        DEFAULT_TEXT() { return "" }
+        DEFAULT_PRIO() { return "mid" }
+      
+        get text() { return this._text }
+        set text(text) { this._text = text; this.changed() }
+        get priority() { return this._priority }
+        set priority(priority) { this._priority = priority; this.changed() }
+      
+        constructor() {
+          riot.observable(this)
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+        }
+        changed() { //console.log(this.text)
+          this.trigger("changed", this.text, this.priority)
+        }
+        init() {
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+          this.changed();
+        }
+      }
+      
+      // Todoクラスを定義
+      class Todo {
+        get tasks() { return this._tasks; }
+        constructor() {
+          riot.observable(this)
+          this._tasks = [];
+        }
+      
+        changed() { //console.log(this.tasks)
+          this.trigger("changed", this.tasks, this.hasCompletedTasks())
+        }
+      
+        addTask(...tasks) { //console.log(tasks)
+          for ( let task of tasks  ) {
+            this._tasks.push(task);
+          }
+          this.changed();
+        }
+        toggle(i) {
+          let task = this._tasks[i];
+          if ( task ) {
+            task.done = !task.done;
+            this.changed();
+          }
+        }
+        clearCompletedTasks() {
+          let tasks = this.tasks.filter(function(task, i){
+            return !task.done
+          });
+          this._tasks = tasks;
+          this.changed();
+        }
+        hasCompletedTasks() {
+          let completed = this.tasks.some(function(task, i){
+            return task.done
+          });
+          return completed;
+        }
+      }
+      
+      // InputとTodoのインスタンス生成
+      let todo  = new Todo();
+      let input = new Input();
+      //todo.addTask({title:"Test",done:false}, {title:"Hoge", done:false});
+      
+      // riotタグをマウント
+      riot.mount("todo", {todo:todo, input:input});
+    </script>
+    <section>
       <h2>解説</h2>
       <p>まず<a href="./todo_0.html">TODO - 普通の使い方</a>を読んでることを前提とする。</p>
       <ul>
@@ -209,83 +287,6 @@
           <li>changePriority()も同じで、選択されたpriorityに変更があったら、Inputオブジェクトの値を書き換えてあげ、あとはchanged on(changedと処理が流れる</li>
         </ul>
       </p>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
-    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
-    <script src="./riot-sass.js"></script>
-    <script>
-      // Inputクラスを定義
-      class Input {
-        DEFAULT_TEXT() { return "" }
-        DEFAULT_PRIO() { return "mid" }
-      
-        get text() { return this._text }
-        set text(text) { this._text = text; this.changed() }
-        get priority() { return this._priority }
-        set priority(priority) { this._priority = priority; this.changed() }
-      
-        constructor() {
-          riot.observable(this)
-          this._text      = this.DEFAULT_TEXT();
-          this._priority  = this.DEFAULT_PRIO();
-        }
-        changed() { //console.log(this.text)
-          this.trigger("changed", this.text, this.priority)
-        }
-        init() {
-          this._text      = this.DEFAULT_TEXT();
-          this._priority  = this.DEFAULT_PRIO();
-          this.changed();
-        }
-      }
-      
-      // Todoクラスを定義
-      class Todo {
-        get tasks() { return this._tasks; }
-        constructor() {
-          riot.observable(this)
-          this._tasks = [];
-        }
-      
-        changed() { //console.log(this.tasks)
-          this.trigger("changed", this.tasks, this.hasCompletedTasks())
-        }
-      
-        addTask(...tasks) { //console.log(tasks)
-          for ( let task of tasks  ) {
-            this._tasks.push(task);
-          }
-          this.changed();
-        }
-        toggle(i) {
-          let task = this._tasks[i];
-          if ( task ) {
-            task.done = !task.done;
-            this.changed();
-          }
-        }
-        clearCompletedTasks() {
-          let tasks = this.tasks.filter(function(task, i){
-            return !task.done
-          });
-          this._tasks = tasks;
-          this.changed();
-        }
-        hasCompletedTasks() {
-          let completed = this.tasks.some(function(task, i){
-            return task.done
-          });
-          return completed;
-        }
-      }
-      
-      // InputとTodoのインスタンス生成
-      let todo  = new Todo();
-      let input = new Input();
-      //todo.addTask({title:"Test",done:false}, {title:"Hoge", done:false});
-      
-      // riotタグをマウント
-      riot.mount("todo", {todo:todo, input:input});
-    </script>
+    </section>
   </body>
 </html>

@@ -83,9 +83,105 @@
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.TODO_CLEAR)
           }
-          
         </todo>
       </script>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
+    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
+    <script src="/js/riot-sass.js"></script>
+    <script src="/js/riot-flux.js"></script>
+    <script>
+      // InputStoreクラスを定義
+      class InputStore extends Store {
+        DEFAULT_TEXT() { return "" }
+        DEFAULT_PRIO() { return "mid" }
+      
+        get text() { return this._text }
+        set text(text) { this._text = text; this.changed() }
+        get priority() { return this._priority }
+        set priority(priority) { this._priority = priority; this.changed() }
+      
+        constructor() {
+          super();
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+        }
+        init() {
+          this._text      = this.DEFAULT_TEXT();
+          this._priority  = this.DEFAULT_PRIO();
+          this.changed();
+        }
+      }
+      
+      // TodoStoreクラスを定義
+      class TodoStore extends Store {
+        get tasks() { return this._tasks; }
+        get hasCompletedTasks() {
+          let completed = this.tasks.some(function(task, i){
+            return task.done
+          });
+          return completed;
+        }
+        constructor() {
+          super();
+          this._tasks = [];
+        }
+      
+        addTask(...tasks) { //console.log(tasks)
+          for ( const task of tasks  ) {
+            this._tasks.push(task);
+          }
+          this.changed();
+        }
+        toggle(i) {
+          let task = this._tasks[i];
+          if ( task ) {
+            task.done = !task.done;
+            this.changed();
+          }
+        }
+        clearCompletedTasks() {
+          let tasks = this.tasks.filter(function(task, i){
+            return !task.done
+          });
+          this._tasks = tasks;
+          this.changed();
+        }
+      }
+      
+      // アクション作成
+      const ACTION = {
+        TODO_ADD      : "TODO_ADD",
+        TODO_TOGGLE   : "TODO_TOGGLE",
+        TODO_CLEAR    : "TODO_CLEAR",
+        INPUT_WRITING : "INPUT_WRITING",
+        INPUT_CHANGE  : "INPUT_CHANGE",
+      };
+      
+      // ディスパッチャの設定
+      dispatcher.addStore("todo",   new TodoStore());
+      dispatcher.addStore("input",  new InputStore());
+      dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)
+        stores.todo.addTask(...tasks);
+        stores.input.init()
+      });
+      dispatcher.on(ACTION.TODO_TOGGLE, function(stores, i){
+        stores.todo.toggle(i);
+      });
+      dispatcher.on(ACTION.TODO_CLEAR, function(stores){
+        stores.todo.clearCompletedTasks();
+      });
+      dispatcher.on(ACTION.INPUT_WRITING, function(stores, text){
+        stores.input.text = text;
+      });
+      dispatcher.on(ACTION.INPUT_CHANGE, function(stores, priority){
+        stores.input.priority = priority
+      });
+      
+      // riotタグをマウント
+      riot.mount("todo", {dispatcher:dispatcher, action:ACTION});
+    </script>
+    <section>
       <h2>解説</h2>
       <p>まず<a href="./todo_1.html">TODO - observableを使ってみる</a>を読んでることを前提とする。</p>
       <ul>
@@ -203,101 +299,6 @@
       <p>せめて、複雑な呼び分けができるような仕組みが実装されてれば「ああこのサンプルはそのままStoreに処理渡してるけど、そうじゃない事もできるんだな」って思えるけど、</p>
       <p>そんな処理はまったくなくて、本当にアクションをそのまま渡していて、そのそのまま渡す処理も、いちいちアクション１つ１つ書くのは面倒だから、forEachとかでループになっているだけって感じ</p>
       <p>まぁいいや、あれだと無駄に処理が遅くなるだけだと思うので、不採用。いずれ理解できたら採用するかな。</p>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/riot@3.6.0/riot+compiler.min.js"></script>
-    <script src="https://cdn.rawgit.com/medialize/sass.js/v0.6.3/dist/sass.js"></script>
-    <script src="./riot-sass.js"></script>
-    <script src="./riot-flux.js"></script>
-    <script>
-      // InputStoreクラスを定義
-      class InputStore extends Store {
-        DEFAULT_TEXT() { return "" }
-        DEFAULT_PRIO() { return "mid" }
-      
-        get text() { return this._text }
-        set text(text) { this._text = text; this.changed() }
-        get priority() { return this._priority }
-        set priority(priority) { this._priority = priority; this.changed() }
-      
-        constructor() {
-          super();
-          this._text      = this.DEFAULT_TEXT();
-          this._priority  = this.DEFAULT_PRIO();
-        }
-        init() {
-          this._text      = this.DEFAULT_TEXT();
-          this._priority  = this.DEFAULT_PRIO();
-          this.changed();
-        }
-      }
-      
-      // TodoStoreクラスを定義
-      class TodoStore extends Store {
-        get tasks() { return this._tasks; }
-        get hasCompletedTasks() {
-          let completed = this.tasks.some(function(task, i){
-            return task.done
-          });
-          return completed;
-        }
-        constructor() {
-          super();
-          this._tasks = [];
-        }
-      
-        addTask(...tasks) { //console.log(tasks)
-          for ( const task of tasks  ) {
-            this._tasks.push(task);
-          }
-          this.changed();
-        }
-        toggle(i) {
-          let task = this._tasks[i];
-          if ( task ) {
-            task.done = !task.done;
-            this.changed();
-          }
-        }
-        clearCompletedTasks() {
-          let tasks = this.tasks.filter(function(task, i){
-            return !task.done
-          });
-          this._tasks = tasks;
-          this.changed();
-        }
-      }
-      
-      // アクション作成
-      const ACTION = {
-        TODO_ADD      : "TODO_ADD",
-        TODO_TOGGLE   : "TODO_TOGGLE",
-        TODO_CLEAR    : "TODO_CLEAR",
-        INPUT_WRITING : "INPUT_WRITING",
-        INPUT_CHANGE  : "INPUT_CHANGE",
-      };
-      
-      // ディスパッチャの設定
-      dispatcher.addStore("todo",   new TodoStore());
-      dispatcher.addStore("input",  new InputStore());
-      dispatcher.on(ACTION.TODO_ADD, function(stores, ...tasks){ //console.log(tasks)
-        stores.todo.addTask(...tasks);
-        stores.input.init()
-      });
-      dispatcher.on(ACTION.TODO_TOGGLE, function(stores, i){
-        stores.todo.toggle(i);
-      });
-      dispatcher.on(ACTION.TODO_CLEAR, function(stores){
-        stores.todo.clearCompletedTasks();
-      });
-      dispatcher.on(ACTION.INPUT_WRITING, function(stores, text){
-        stores.input.text = text;
-      });
-      dispatcher.on(ACTION.INPUT_CHANGE, function(stores, priority){
-        stores.input.priority = priority
-      });
-      
-      // riotタグをマウント
-      riot.mount("todo", {dispatcher:dispatcher, action:ACTION});
-    </script>
+    </section>
   </body>
 </html>

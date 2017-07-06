@@ -1,5 +1,5 @@
 extends ./_layout
-block contents
+block riot
   main
     todo
     script(type="riot/tag")
@@ -100,7 +100,6 @@ block contents
             e.preventUpdate = true;
             dispatcher.trigger(ACTION.TODO_CLEAR)
           }
-
 block append js
   script(src='/js/riot-sass.js')
   script(src='/js/riot-flux.js')
@@ -194,3 +193,23 @@ block append js
 
     // riotタグをマウント
     riot.mount("todo", {dispatcher:dispatcher, action:ACTION});
+block memo
+  section
+    h2 解説
+    p まず<a href="./todo_2.html">TODO - fluxを使ってみる</a>を読んでることを前提とする。
+    ul
+      li といっても、タスク入力のフォーム部分と、登録タスクの一覧部分を、子タグとしただけ。
+      li 何が優れてるのか？正直わからないけど、みんな細かく分けてる。
+      li データのやりとりが面倒だから、理由がない限りは不要だと考えてる
+      li このToDoアプリの場合の、分割する必要性は何か？
+      li それは、this.update()にある。
+      li 例えば、タスクをtoggle()したとき、riotのthisにupdate()がかかる。
+      li 書き換わったのはTodoStoreだけなのに、InputStoreのビューにも更新がかかってしまう
+      li ビューが少なければよいけど、多いと問題だ。
+      li riotタグを分割しておけば、TodoのビューがInputのビューと分かれていれば、
+      li TodoStoreの更新時に走るthis.update()は、Todoのビューだけにとどまる
+      li この理由から、可能なら分割すべきだと考える。
+      li 再利用性を求めて分割は、あり得ないと思ってる。
+      li どうせそんな再利用しない。そのriotタグの中からしか呼ばれない
+      li 汎用性をもたせるような使い勝手の良い子タグを考えるのは難しいし、
+      li 汎用性を求めるばかりに、いろんなパラメタが付加されていき、複雑になって、さっと使えなくなり、使わなくなる

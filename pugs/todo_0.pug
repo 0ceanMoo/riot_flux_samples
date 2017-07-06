@@ -1,5 +1,5 @@
 extends ./_layout
-block contents
+block riot
   main
     todo
     script(type="riot/tag")
@@ -27,6 +27,12 @@ block contents
           toggleTask(task, e) {
             task.done = !task.done
           }
+block append js
+  script.
+    // riotタグをマウント
+    riot.mount("todo")
+block memo
+  section
     h2 解説
     ul
       li 初期化
@@ -48,8 +54,3 @@ block contents
     ul
       li fluxが何なのかイマイチ分からないが、十分分かりやすいし、シンプルだ。
       li this.tasksのようにコンストラクタ？部分で必要な変数を定義しておくだけで、情報も一箇所にまとまるし、何が困るのだろう？
-
-block append js
-  script.
-    // riotタグをマウント
-    riot.mount("todo")
