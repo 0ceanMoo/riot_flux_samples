@@ -4,7 +4,7 @@ block contents
     todo
     script(type="riot/tag")
       todo
-        h1 TODO - シンプルな使い方
+        h1 TODO - 普通の使い方
         form(onsubmit="{addTask}")
           input(ref="task" placeholder="新規タスクを入力")
           button 追加
@@ -16,8 +16,8 @@ block contents
             color: #ccc;
         .
           this.tasks = [
-            {title:"aaa", done:true},
-            {title:"bbb", done:false},
+            {title:"riotで何か作ってみる",  done:true},
+            {title:"fluxを実践してみる",    done:false},
           ];
           addTask(e) {
             e.preventDefault()
@@ -27,6 +27,27 @@ block contents
           toggle(task, e) {
             task.done = !task.done
           }
+    h2 解説
+    ul
+      li 初期化
+        ul
+          li riotのコンストラクタ？のとこで、this.tasksに2つのタスクを追加
+          li liタグに、this.tasksをループで展開
+      li タスク追加
+        ul
+          li フォームのonsubmitにaddTask()を設定
+          li addTask()は、入力されたタスク（this.refs.task.value）をthis.taskに追加
+          li this.refs.task.value を空にする
+          li すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる
+      li トグル
+        ul
+          li liタグにonclickに、toggle()を設定
+          li toggle()は、ステータスdoneを反転
+          li すると自動で、this.update()されるので、liタグに展開してるthis.tasks も書き換わる
+    h2 雑感
+    ul
+      li fluxが何なのかイマイチ分からないが、十分分かりやすいし、シンプルだ。
+      li this.tasksのようにコンストラクタ？部分で必要な変数を定義しておくだけで、情報も一箇所にまとまるし、何が困るのだろう？
 
 block append js
   script.
