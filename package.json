@@ -1,0 +1,26 @@
+{
+  "name": "riot_flux",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "gulp": "gulp",
+    "build":"npm run -- gulp pug",
+    "watcch":"npm run -- gulp watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0ceanMoo/riot_flux_samples.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/0ceanMoo/riot_flux_samples/issues"
+  },
+  "homepage": "https://github.com/0ceanMoo/riot_flux_samples#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-pug": "^3.3.0"
+  }
+}
