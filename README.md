@@ -1,4 +1,6 @@
 # riot_flux_samples
 
 
-npm run -- gulp watch
+npm install
+npm run watch
+npm run build
